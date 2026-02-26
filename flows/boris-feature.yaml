@@ -1,0 +1,180 @@
+id: boris-feature
+name: Boris Feature Flow
+description: Research → Plan → Annotate (loop) → Todo → Implement → Feedback → Update Research → Done
+
+stages:
+  - id: research
+    name: Research
+    icon: "🔍"
+    instructions: |
+      ┌─────────────────────────────────────────────────────────────────────────────────┐
+      │ ▸ Research → Plan → Annotate ↻ → Todo → Implement → Feedback ↻ → Update Research → Done ↻ │
+      │   next → Plan                                                                   │
+      └─────────────────────────────────────────────────────────────────────────────────┘
+      Read code deeply, in great detail, understand all specificities.
+      Write all findings into research.md.
+      Do NOT plan or implement anything yet.
+    keywords:
+      - deeply
+      - in great detail
+      - don't implement yet
+    transitions:
+      next: plan
+    checklist:
+      - Codebase deeply read
+      - research.md written
+      - I've reviewed research.md
+    can_loop: false
+
+  - id: plan
+    name: Plan
+    icon: "📋"
+    instructions: |
+      ┌─────────────────────────────────────────────────────────────────────────────────┐
+      │ Research → ▸ Plan → Annotate ↻ → Todo → Implement → Feedback ↻ → Update Research → Done ↻ │
+      │ ← Research   next → Annotate                                                    │
+      └─────────────────────────────────────────────────────────────────────────────────┘
+      Write a detailed plan into plan.md.
+      Include code snippets, file paths, trade-offs.
+      Base the plan on the actual codebase — read source files first.
+      Do NOT implement yet.
+    keywords:
+      - detailed plan
+      - code snippets
+      - don't implement yet
+    transitions:
+      next: annotate
+      back: research
+    checklist:
+      - plan.md written
+      - Code snippets included
+      - Files to modify listed
+    can_loop: false
+
+  - id: annotate
+    name: Annotate
+    icon: "✏️"
+    instructions: |
+      ┌─────────────────────────────────────────────────────────────────────────────────┐
+      │ Research → Plan → ▸ Annotate ↻ → Todo → Implement → Feedback ↻ → Update Research → Done ↻ │
+      │           ← Plan   next → Todo   ↻ loop to refine                               │
+      └─────────────────────────────────────────────────────────────────────────────────┘
+      I've added notes to plan.md.
+      Address ALL my notes and update the document.
+      Do NOT implement yet.
+    keywords:
+      - address all the notes
+      - update the document
+      - don't implement yet
+    transitions:
+      next: todo
+      back: plan
+    checklist:
+      - Notes added to plan.md
+      - Notes addressed by LLM
+      - Plan approved
+    can_loop: true
+
+  - id: todo
+    name: Todo List
+    icon: "📝"
+    instructions: |
+      ┌─────────────────────────────────────────────────────────────────────────────────────┐
+      │ Research → Plan → Annotate ↻ → ▸ Todo → Implement → Feedback ↻ → Update Research → Done ↻ │
+      │                   ← Annotate   next → Implement                                     │
+      └─────────────────────────────────────────────────────────────────────────────────────┘
+      Add a detailed todo list to the plan with all phases and individual tasks.
+      Do NOT implement yet.
+    transitions:
+      next: implement
+      back: annotate
+    checklist:
+      - Todo list created
+      - Task breakdown reviewed
+    can_loop: false
+
+  - id: implement
+    name: Implement
+    icon: "🚀"
+    instructions: |
+      ┌──────────────────────────────────────────────────────────────────────────────────────┐
+      │ Research → Plan → Annotate ↻ → Todo → ▸ Implement → Feedback ↻ → Update Research → Done ↻ │
+      │                                ← Annotate   next → Feedback                          │
+      └──────────────────────────────────────────────────────────────────────────────────────┘
+      Implement everything in the plan.
+      Mark tasks as completed in the plan document as you go.
+      Do not stop until all tasks and phases are completed.
+      Do not add unnecessary comments or jsdocs.
+      Continuously run typecheck.
+    keywords:
+      - implement it all
+      - mark as completed
+      - do not stop
+      - run typecheck
+    transitions:
+      next: feedback
+      back: annotate
+    checklist:
+      - All tasks completed
+      - Typecheck passes
+      - No regressions
+    can_loop: false
+
+  - id: feedback
+    name: Feedback
+    icon: "🔄"
+    instructions: |
+      ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+      │ Research → Plan → Annotate ↻ → Todo → Implement → ▸ Feedback ↻ → Update Research → Done ↻ │
+      │                                       ← Implement   next → Update Research   ↻ loop      │
+      └──────────────────────────────────────────────────────────────────────────────────────────┘
+      Review and test. Accept terse corrections.
+      If direction is wrong, revert and re-scope.
+    transitions:
+      next: update-research
+      back: implement
+    checklist:
+      - Tested and verified
+      - Corrections applied
+      - Changes committed
+    can_loop: true
+
+  - id: update-research
+    name: Update Research
+    icon: "📄"
+    instructions: |
+      ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+      │ Research → Plan → Annotate ↻ → Todo → Implement → Feedback ↻ → ▸ Update Research → Done ↻   │
+      │                                                    ← Feedback   next → Done                   │
+      └──────────────────────────────────────────────────────────────────────────────────────────────┘
+      Review all changes made during implementation and feedback.
+      Update research.md to reflect the current state of the codebase.
+      Add any new findings, patterns, or architectural decisions discovered during implementation.
+      Remove or correct any information in research.md that is now outdated.
+      Do NOT implement new features or make code changes.
+    keywords:
+      - update research
+      - reflect changes
+      - keep documentation current
+    transitions:
+      next: done
+      back: feedback
+    checklist:
+      - research.md reviewed against implementation changes
+      - New findings and patterns documented
+      - Outdated information corrected or removed
+    can_loop: false
+
+  - id: done
+    name: Done
+    icon: "✅"
+    instructions: |
+      ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+      │ Research → Plan → Annotate ↻ → Todo → Implement → Feedback ↻ → Update Research → ▸ Done ↻       │
+      │                                                                ← Update Research   ↻ → Research  │
+      └──────────────────────────────────────────────────────────────────────────────────────────────────┘
+      Feature complete. To start a new feature, loop back to the Research stage.
+    transitions:
+      back: research
+    checklist: []
+    can_loop: true

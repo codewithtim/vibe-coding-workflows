@@ -1,0 +1,75 @@
+id: bugfix
+name: Bugfix Flow
+description: Diagnose → Fix → Verify → Done
+
+stages:
+  - id: diagnose
+    name: Diagnose
+    icon: "🔬"
+    instructions: |
+      Investigate the bug thoroughly. Do not fix anything yet.
+      Read all relevant code, logs, and error messages.
+      Write your findings in a diagnosis.md file including:
+      - Root cause
+      - Affected files and functions
+      - Reproduction steps
+      - Proposed fix approach
+    keywords:
+      - root cause
+      - investigate thoroughly
+      - don't fix yet
+    transitions:
+      next: fix
+    checklist:
+      - Root cause identified
+      - Affected code located
+      - diagnosis.md written
+      - Fix approach decided
+    can_loop: false
+
+  - id: fix
+    name: Fix
+    icon: "🔧"
+    instructions: |
+      Implement the fix as described in diagnosis.md.
+      Make surgical, minimal changes — only what is needed to fix the bug.
+      Do not refactor unrelated code.
+      Run tests and typecheck after each change.
+    keywords:
+      - minimal changes
+      - surgical fix
+      - run tests
+    transitions:
+      next: verify
+      back: diagnose
+    checklist:
+      - Fix implemented
+      - Tests pass
+      - Typecheck passes
+      - No regressions introduced
+    can_loop: false
+
+  - id: verify
+    name: Verify
+    icon: "✔️"
+    instructions: |
+      Verify the bug is fully fixed.
+      Test the exact reproduction steps from diagnosis.md.
+      Check edge cases.
+      Write a brief summary of what was changed and why.
+    transitions:
+      next: done
+      back: fix
+    checklist:
+      - Bug reproduction confirmed fixed
+      - Edge cases tested
+      - Change summary written
+    can_loop: true
+
+  - id: done
+    name: Done
+    icon: "✅"
+    instructions: ""
+    transitions: {}
+    checklist: []
+    can_loop: false
