@@ -6,7 +6,7 @@
   "author": "Tim Knight",
   "repository": {
     "type": "git",
-    "url": "https://github.com/timknight/workflow-pilot.git"
+    "url": "https://github.com/codewithtim/vibe-coding-workflows.git"
   },
   "keywords": ["workflow", "mcp", "ai-coding", "claude", "stage-management", "cli"],
   "type": "module",
