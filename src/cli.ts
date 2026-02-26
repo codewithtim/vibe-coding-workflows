@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { opStatus, opStart, opAdvance, opBack, opLoop, opCheck, opEnd, opFlows, type OpResult } from "./ops.js";
+import { readFileSync } from "fs";
+import { opStatus, opStart, opAdvance, opBack, opLoop, opCheck, opEnd, opFlows, opPrompt, opStatusline, type OpResult } from "./ops.js";
 
 function print(result: OpResult) {
   if (result.ok) {
@@ -63,6 +64,34 @@ switch (cmd) {
     print(opFlows());
     break;
 
+  case "prompt":
+  case "p": {
+    const result = opPrompt();
+    if (result.ok && result.message) {
+      console.log(result.message);
+    }
+    break;
+  }
+
+  case "statusline":
+  case "sl": {
+    let cwd = "";
+    try {
+      if (!process.stdin.isTTY) {
+        const raw = readFileSync(0, "utf8");
+        const parsed = JSON.parse(raw);
+        cwd = parsed.cwd ?? "";
+      }
+    } catch {
+      // no stdin or invalid JSON — fall through with empty cwd
+    }
+    const slResult = opStatusline(cwd);
+    if (slResult.ok && slResult.message) {
+      console.log(slResult.message);
+    }
+    break;
+  }
+
   default:
     console.log(`workflow-pilot (wp) — workflow state manager for AI coding sessions
 
@@ -71,12 +100,14 @@ Usage:
   wp start <flow-id>    Start a workflow session
   wp status             Show current stage, checklist, transitions
   wp advance            Move to next stage
-  wp back               Go to previous stage  
+  wp back               Go to previous stage
   wp loop               Repeat current stage
   wp check <n>          Toggle checklist item n
   wp end                End current session
+  wp prompt             Compact stage info for zsh prompt
+  wp statusline         ANSI breadcrumb for Claude Code status line
 
-Aliases: s=status, a=advance, b=back, l=loop, c=check
+Aliases: s=status, a=advance, b=back, l=loop, c=check, p=prompt, sl=statusline
 
 State: ~/.workflow-pilot/state.json
 Flows: ~/.workflow-pilot/flows/*.yaml`);

@@ -39,43 +39,8 @@ Add to your `~/.zshrc`:
 
 ```bash
 workflow_pilot_prompt() {
-  local sessions_dir="$HOME/.workflow-pilot/sessions"
-  [[ -d "$sessions_dir" ]] || return
-
-  # Walk up from cwd to find a session state file (python3, no deps)
   local info
-  info=$(python3 -c "
-import json, sys, os, hashlib
-sessions_dir = os.path.expanduser('~/.workflow-pilot/sessions')
-d = os.getcwd()
-s = None
-while True:
-  h = hashlib.sha256(d.encode()).hexdigest()[:16]
-  p = os.path.join(sessions_dir, h + '.json')
-  if os.path.isfile(p):
-    try:
-      with open(p) as f:
-        s = json.load(f)
-      break
-    except Exception:
-      pass
-  parent = os.path.dirname(d)
-  if parent == d:
-    break
-  d = parent
-if not s:
-  sys.exit(0)
-flow = s.get('active_flow', '')
-stage = s.get('current_stage', '')
-loop = s.get('loop_count', 0)
-checklist = s.get('checklist', {}).get(stage, [])
-checked = sum(1 for x in checklist if x)
-total = len(checklist)
-loop_str = f' #{loop}' if loop > 0 else ''
-check_str = f' □ {checked}/{total}' if total > 0 else ''
-print(f'{stage}{loop_str}{check_str}')
-" 2>/dev/null)
-
+  info=$(wp prompt 2>/dev/null)
   [[ -n "$info" ]] && echo "%F{cyan}⚙ ${info}%f "
 }
 
@@ -88,25 +53,27 @@ RPROMPT='$(workflow_pilot_prompt)'           # right prompt
 
 The status line shows your current workflow stage persistently at the bottom of Claude Code — even while the LLM is responding.
 
-Copy the status line script:
-
-```bash
-cp statusline/workflow-statusline.sh ~/.claude/workflow-statusline.sh
-chmod +x ~/.claude/workflow-statusline.sh
-```
-
 Add to your `~/.claude/settings.json`:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/workflow-statusline.sh"
+    "command": "wp statusline"
   }
 }
 ```
 
 This displays: `boris-feature | 🚀 Implement □ 1/3`
+
+Alternatively, copy the thin wrapper script if you prefer a file reference:
+
+```bash
+cp statusline/workflow-statusline.sh ~/.claude/workflow-statusline.sh
+chmod +x ~/.claude/workflow-statusline.sh
+```
+
+Then use `"command": "~/.claude/workflow-statusline.sh"` in your settings.
 
 Restart Claude Code to activate the status line.
 
@@ -245,8 +212,7 @@ Each project gets its own session file under `~/.workflow-pilot/sessions/`, keye
     └── your-custom-flow.yaml
 
 ~/.claude/
-├── settings.json       statusLine config
-└── workflow-statusline.sh  status line script
+└── settings.json       statusLine config (runs `wp statusline`)
 ```
 
 ## Inspiration

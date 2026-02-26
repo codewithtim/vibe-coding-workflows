@@ -2,6 +2,13 @@ import { readState, writeState, clearState } from "./state.js";
 import { loadFlow, listFlows, getStage } from "./flows.js";
 import type { WorkflowState, Flow, Stage } from "./types.js";
 
+// ANSI helpers for statusline output
+const DIM = "\x1b[2m";
+const BOLD = "\x1b[1m";
+const CYAN = "\x1b[36m";
+const GREEN = "\x1b[32m";
+const RESET = "\x1b[0m";
+
 export type OpResult =
   | { ok: true; message: string; state?: WorkflowState; flow?: Flow; stage?: Stage }
   | { ok: false; error: string };
@@ -170,4 +177,86 @@ export function opFlows(): OpResult {
   }
   const lines = flows.map((f) => `  ${f.id.padEnd(20)} ${f.name}\n${"".padEnd(22)}${f.description}`);
   return { ok: true, message: `Available flows:\n\n${lines.join("\n\n")}` };
+}
+
+export function opPrompt(): OpResult {
+  const state = readState();
+  if (!state) return { ok: true, message: "" };
+
+  const flow = loadFlow(state.active_flow);
+  if (!flow) return { ok: true, message: "" };
+
+  const stage = getStage(flow, state.current_stage);
+  if (!stage) return { ok: true, message: "" };
+
+  const parts: string[] = [stage.id];
+
+  if (state.loop_count > 0) {
+    parts.push(`#${state.loop_count}`);
+  }
+
+  const checkItems = state.checklist[stage.id] ?? stage.checklist.map(() => false);
+  const total = stage.checklist.length;
+  if (total > 0) {
+    const checked = checkItems.filter(Boolean).length;
+    parts.push(`□ ${checked}/${total}`);
+  }
+
+  return { ok: true, message: parts.join(" ") };
+}
+
+export function opStatusline(cwd: string): OpResult {
+  const state = readState(cwd);
+  if (!state) return { ok: true, message: "" };
+
+  const flow = loadFlow(state.active_flow);
+  if (!flow) return { ok: true, message: "" };
+
+  const stage = getStage(flow, state.current_stage);
+  if (!stage) return { ok: true, message: "" };
+
+  const stageIndex = flow.stages.findIndex((s) => s.id === stage.id);
+  const prevStage = stageIndex > 0 ? flow.stages[stageIndex - 1] : null;
+  const nextStage = stageIndex < flow.stages.length - 1 ? flow.stages[stageIndex + 1] : null;
+
+  const parts: string[] = [];
+
+  // Flow name (dimmed)
+  parts.push(`${DIM}${state.active_flow}${RESET}`);
+
+  // Separator
+  parts.push(`${DIM}|${RESET}`);
+
+  // Breadcrumb: prev → current → next
+  let breadcrumb = "";
+  if (prevStage) {
+    breadcrumb += `${DIM}${prevStage.icon} ${prevStage.name} →${RESET} `;
+  }
+  breadcrumb += `${BOLD}${CYAN}${stage.icon} ${stage.name}${RESET}`;
+  if (state.loop_count > 0) {
+    breadcrumb += ` ${DIM}#${state.loop_count}${RESET}`;
+  }
+  if (nextStage) {
+    breadcrumb += ` ${DIM}→ ${nextStage.icon} ${nextStage.name}${RESET}`;
+  }
+  parts.push(breadcrumb);
+
+  // Loop indicator
+  if (stage.can_loop) {
+    parts.push(`${DIM}↺${RESET}`);
+  }
+
+  // Checklist progress
+  const checkItems = state.checklist[stage.id] ?? stage.checklist.map(() => false);
+  const total = stage.checklist.length;
+  if (total > 0) {
+    const checked = checkItems.filter(Boolean).length;
+    if (checked === total) {
+      parts.push(`${GREEN}✓ ${checked}/${total}${RESET}`);
+    } else {
+      parts.push(`${DIM}□ ${checked}/${total}${RESET}`);
+    }
+  }
+
+  return { ok: true, message: parts.join(" ") };
 }

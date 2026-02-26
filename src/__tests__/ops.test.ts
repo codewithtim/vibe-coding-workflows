@@ -23,7 +23,7 @@ vi.mock("../flows.js", () => ({
 
 import { readState, writeState, clearState } from "../state.js";
 import { loadFlow, listFlows, getStage } from "../flows.js";
-import { opStatus, opStart, opAdvance, opBack, opLoop, opCheck, opEnd, opFlows } from "../ops.js";
+import { opStatus, opStart, opAdvance, opBack, opLoop, opCheck, opEnd, opFlows, opPrompt, opStatusline } from "../ops.js";
 
 // --- Test fixtures ---
 
@@ -540,6 +540,199 @@ describe("opFlows", () => {
       expect(result.message).toContain("Fix bugs");
       expect(result.message).toContain("feature");
       expect(result.message).toContain("Feature Flow");
+    }
+  });
+});
+
+// ─── opPrompt ─────────────────────────────────────────────────
+
+describe("opPrompt", () => {
+  it("should return empty message when no active workflow", () => {
+    setupMocks(null);
+    const result = opPrompt();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.message).toBe("");
+  });
+
+  it("should return empty message when flow not found", () => {
+    setupMocks(makeState(), null);
+    const result = opPrompt();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.message).toBe("");
+  });
+
+  it("should return empty message when stage not found", () => {
+    setupMocks(makeState({ current_stage: "nonexistent" }));
+    vi.mocked(getStage).mockReturnValue(null);
+    const result = opPrompt();
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.message).toBe("");
+  });
+
+  it("should return stage id with checklist progress", () => {
+    setupMocks(makeState());
+    const result = opPrompt();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toBe("research □ 0/2");
+    }
+  });
+
+  it("should include loop count when > 0", () => {
+    setupMocks(makeState({ current_stage: "annotate", loop_count: 2 }));
+    const result = opPrompt();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toBe("annotate #2 □ 0/2");
+    }
+  });
+
+  it("should not include loop count when 0", () => {
+    setupMocks(makeState());
+    const result = opPrompt();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).not.toContain("#");
+    }
+  });
+
+  it("should show checklist progress from state", () => {
+    setupMocks(makeState({ checklist: { research: [true, false] } }));
+    const result = opPrompt();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toBe("research □ 1/2");
+    }
+  });
+
+  it("should omit checklist when stage has no items", () => {
+    setupMocks(makeState({ current_stage: "done" }));
+    const result = opPrompt();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toBe("done");
+      expect(result.message).not.toContain("□");
+    }
+  });
+});
+
+// ─── opStatusline ─────────────────────────────────────────────
+
+describe("opStatusline", () => {
+  it("should return empty message when no active workflow", () => {
+    setupMocks(null);
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.message).toBe("");
+  });
+
+  it("should return empty message when flow not found", () => {
+    setupMocks(makeState(), null);
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.message).toBe("");
+  });
+
+  it("should return empty message when stage not found", () => {
+    setupMocks(makeState({ current_stage: "nonexistent" }));
+    vi.mocked(getStage).mockReturnValue(null);
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.message).toBe("");
+  });
+
+  it("should contain flow name", () => {
+    setupMocks(makeState());
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toContain("test-flow");
+    }
+  });
+
+  it("should contain current stage with bold cyan formatting", () => {
+    setupMocks(makeState());
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toContain("\x1b[1m\x1b[36m🔍 Research\x1b[0m");
+    }
+  });
+
+  it("should show next stage in breadcrumb", () => {
+    setupMocks(makeState());
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toContain("→ 📋 Plan");
+    }
+  });
+
+  it("should show prev stage in breadcrumb", () => {
+    setupMocks(makeState({ current_stage: "plan" }));
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toContain("🔍 Research →");
+      expect(result.message).toContain("→ ✏️ Annotate");
+    }
+  });
+
+  it("should include loop count when > 0", () => {
+    setupMocks(makeState({ current_stage: "annotate", loop_count: 3 }));
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toContain("#3");
+    }
+  });
+
+  it("should show loop indicator for loopable stages", () => {
+    setupMocks(makeState({ current_stage: "annotate" }));
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toContain("↺");
+    }
+  });
+
+  it("should not show loop indicator for non-loopable stages", () => {
+    setupMocks(makeState({ current_stage: "research" }));
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).not.toContain("↺");
+    }
+  });
+
+  it("should show checklist progress", () => {
+    setupMocks(makeState({ checklist: { research: [true, false] } }));
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toContain("□ 1/2");
+    }
+  });
+
+  it("should show green checkmark when all items complete", () => {
+    setupMocks(makeState({ checklist: { research: [true, true] } }));
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.message).toContain("\x1b[32m✓ 2/2\x1b[0m");
+    }
+  });
+
+  it("should use ANSI codes throughout", () => {
+    setupMocks(makeState());
+    const result = opStatusline("/mock/project");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      // Should contain DIM, BOLD, CYAN, RESET codes
+      expect(result.message).toContain("\x1b[2m");
+      expect(result.message).toContain("\x1b[1m");
+      expect(result.message).toContain("\x1b[36m");
+      expect(result.message).toContain("\x1b[0m");
     }
   });
 });
