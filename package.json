@@ -2,16 +2,45 @@
   "name": "workflow-pilot",
   "version": "0.1.0",
   "description": "Workflow state manager for AI coding sessions via MCP + CLI",
+  "license": "MIT",
+  "author": "Tim Knight",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/timknight/workflow-pilot.git"
+  },
+  "keywords": ["workflow", "mcp", "ai-coding", "claude", "stage-management", "cli"],
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
   "bin": {
     "wp": "./dist/cli.js",
     "workflow-pilot-mcp": "./dist/mcp.js"
   },
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev:mcp": "tsx src/mcp.ts",
-    "dev:cli": "tsx src/cli.ts"
+    "dev:cli": "tsx src/cli.ts",
+    "prepublishOnly": "npm run build && npm run test"
   },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "flows",
+    "statusline",
+    "CLAUDE.md",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "js-yaml": "^4.1.0",
@@ -21,6 +50,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.0.0",
     "tsx": "^4.7.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.18"
   }
 }

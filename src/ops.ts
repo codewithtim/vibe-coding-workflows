@@ -68,6 +68,7 @@ export function opStart(flowId: string): OpResult {
     checklist: {},
     history: [],
     started_at: new Date().toISOString(),
+    project_dir: process.cwd(),
   };
   writeState(newState);
   return {

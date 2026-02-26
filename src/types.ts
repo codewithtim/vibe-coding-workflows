@@ -36,4 +36,5 @@ export interface WorkflowState {
   checklist: ChecklistState;
   history: HistoryEntry[];
   started_at: string;
+  project_dir: string;
 }

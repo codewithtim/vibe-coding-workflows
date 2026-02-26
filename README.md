@@ -1,5 +1,7 @@
 # workflow-pilot
 
+[![npm version](https://img.shields.io/npm/v/workflow-pilot.svg)](https://www.npmjs.com/package/workflow-pilot)
+
 Workflow state manager for AI coding sessions.
 
 Shows your current workflow stage in your zsh prompt and injects stage-appropriate context into Claude Code / opencode via MCP.
@@ -7,17 +9,16 @@ Shows your current workflow stage in your zsh prompt and injects stage-appropria
 ## Install
 
 ```bash
-# Clone and install globally
-git clone <repo> workflow-pilot
+npm install -g workflow-pilot
+```
+
+Or install from source:
+```bash
+git clone https://github.com/timknight/workflow-pilot.git
 cd workflow-pilot
 npm install
 npm run build
 npm install -g .
-```
-
-Or install directly from npm (when published):
-```bash
-npm install -g workflow-pilot
 ```
 
 ## Setup
@@ -38,27 +39,41 @@ Add to your `~/.zshrc`:
 
 ```bash
 workflow_pilot_prompt() {
-  local state="$HOME/.workflow-pilot/state.json"
-  [[ -f "$state" ]] || return
+  local sessions_dir="$HOME/.workflow-pilot/sessions"
+  [[ -d "$sessions_dir" ]] || return
 
-  # Read values with python3 (fast, no deps)
+  # Walk up from cwd to find a session state file (python3, no deps)
   local info
   info=$(python3 -c "
-import json, sys
-try:
-  with open('$state') as f:
-    s = json.load(f)
-  flow = s.get('active_flow', '')
-  stage = s.get('current_stage', '')
-  loop = s.get('loop_count', 0)
-  checklist = s.get('checklist', {}).get(stage, [])
-  checked = sum(1 for x in checklist if x)
-  total = len(checklist)
-  loop_str = f' #{loop}' if loop > 0 else ''
-  check_str = f' □ {checked}/{total}' if total > 0 else ''
-  print(f'{stage}{loop_str}{check_str}')
-except:
-  pass
+import json, sys, os, hashlib
+sessions_dir = os.path.expanduser('~/.workflow-pilot/sessions')
+d = os.getcwd()
+s = None
+while True:
+  h = hashlib.sha256(d.encode()).hexdigest()[:16]
+  p = os.path.join(sessions_dir, h + '.json')
+  if os.path.isfile(p):
+    try:
+      with open(p) as f:
+        s = json.load(f)
+      break
+    except Exception:
+      pass
+  parent = os.path.dirname(d)
+  if parent == d:
+    break
+  d = parent
+if not s:
+  sys.exit(0)
+flow = s.get('active_flow', '')
+stage = s.get('current_stage', '')
+loop = s.get('loop_count', 0)
+checklist = s.get('checklist', {}).get(stage, [])
+checked = sum(1 for x in checklist if x)
+total = len(checklist)
+loop_str = f' #{loop}' if loop > 0 else ''
+check_str = f' □ {checked}/{total}' if total > 0 else ''
+print(f'{stage}{loop_str}{check_str}')
 " 2>/dev/null)
 
   [[ -n "$info" ]] && echo "%F{cyan}⚙ ${info}%f "
@@ -201,7 +216,7 @@ stages:
 └──────────┬───────────────────────────┘
            │ reads/writes
            ▼
-    ~/.workflow-pilot/state.json
+    ~/.workflow-pilot/sessions/<hash>.json
            ▲
            │ reads/writes
 ┌──────────────────────────────────────┐
@@ -209,19 +224,21 @@ stages:
 │  Manual control from terminal        │
 └──────────────────────────────────────┘
 
-    state.json is also read by:
+    Session files are also read by:
 
     Zsh RPROMPT segment          Claude Code status line
     ⚙ annotate #2 □ 1/3         boris-feature | 🚀 Implement □ 1/3
 ```
 
-The MCP server and CLI share the same `state.json`, so either can control the workflow.
+Each project gets its own session file under `~/.workflow-pilot/sessions/`, keyed by a SHA-256 hash of the project directory. Multiple workflows can run concurrently in different projects.
 
 ## Files
 
 ```
 ~/.workflow-pilot/
-├── state.json          current session state
+├── sessions/
+│   ├── <hash>.json     per-project session state
+│   └── ...
 └── flows/
     ├── boris-feature.yaml
     ├── bugfix.yaml
