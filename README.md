@@ -248,4 +248,7 @@ Each project gets its own session file under `~/.workflow-pilot/sessions/`, keye
 ├── settings.json       statusLine config
 └── workflow-statusline.sh  status line script
 ```
-# vibe-coding-workflows
+
+## Inspiration
+
+This project was inspired by Boris Tane's excellent article [How I Use Claude Code](https://boristane.com/blog/how-i-use-claude-code/), which describes a structured approach to AI-assisted coding with explicit research, planning, and implementation phases. Workflow Pilot generalises that approach into a reusable tool with custom YAML-defined flows.
