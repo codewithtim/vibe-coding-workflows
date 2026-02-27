@@ -1,8 +1,20 @@
-# workflow-pilot
+<p align="center">
+  <img src="logo-200.png" alt="workflow-pilot logo" width="200">
+</p>
 
-[![npm version](https://img.shields.io/npm/v/workflow-pilot.svg)](https://www.npmjs.com/package/workflow-pilot)
+<h1 align="center">workflow-pilot</h1>
 
-Workflow state manager for AI coding sessions.
+<p align="center">
+  Workflow state manager for AI coding sessions.
+</p>
+
+<p align="center">
+  <a href="https://github.com/codewithtim/vibe-coding-workflows/actions/workflows/ci.yml"><img src="https://github.com/codewithtim/vibe-coding-workflows/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.npmjs.com/package/workflow-pilot"><img src="https://img.shields.io/npm/v/workflow-pilot.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/workflow-pilot"><img src="https://img.shields.io/npm/dm/workflow-pilot.svg" alt="npm downloads"></a>
+  <a href="https://github.com/codewithtim/vibe-coding-workflows/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/workflow-pilot.svg" alt="license"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/workflow-pilot.svg" alt="node version"></a>
+</p>
 
 Shows your current workflow stage in your zsh prompt and injects stage-appropriate context into Claude Code / opencode via MCP.
 
